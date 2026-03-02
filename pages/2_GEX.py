@@ -62,12 +62,14 @@ def process_chain(data):
         
         # Calls
         call_oi = call.get('openInterest', 0)
+        call_vol = call.get('volume', 0)
         call_gamma = 0
         if 'OptionGreeks' in call:
             call_gamma = call.get('OptionGreeks', {}).get('gamma', 0)
             
         # Puts
         put_oi = put.get('openInterest', 0)
+        put_vol = put.get('volume', 0)
         put_gamma = 0
         if 'OptionGreeks' in put:
             put_gamma = put.get('OptionGreeks', {}).get('gamma', 0)
@@ -85,6 +87,8 @@ def process_chain(data):
             "Net GEX": net_gex,
             "Call OI": call_oi,
             "Put OI": put_oi,
+            "Call Vol": call_vol,
+            "Put Vol": put_vol,
             "Call GEX": call_gex,
             "Put GEX": put_gex
         })
@@ -194,6 +198,8 @@ def main():
         total_gex = df['Net GEX'].sum()
         total_call_gex = df['Call GEX'].sum()
         total_put_gex = df['Put GEX'].sum()
+        total_call_vol = df['Call Vol'].sum()
+        total_put_vol = df['Put Vol'].sum()
         
         # Find Largest GEX Strikes
         max_call_row = df.loc[df['Call GEX'].idxmax()]
@@ -205,7 +211,15 @@ def main():
         m1.metric("Net GEX", f"${total_gex/1e6:.2f}M")
         m2.metric("Call GEX", f"${total_call_gex/1e6:.2f}M")
         m3.metric("Put GEX", f"${total_put_gex/1e6:.2f}M")
-        m4.metric("GEX Ratio (Call/Put)", f"{abs(total_call_gex/total_put_gex):.2f}")
+        m4.metric("GEX Ratio (C/P)", f"{abs(total_call_gex/total_put_gex):.2f}" if total_put_gex != 0 else "N/A")
+
+        m5, m6, m7, m8 = st.columns(4)
+        m5.metric("Expiry", str(expiry))
+        m6.metric("Call Volume", f"{int(total_call_vol):,}")
+        m7.metric("Put Volume", f"{int(total_put_vol):,}")
+        m8.metric("P/C Vol Ratio", f"{total_put_vol/total_call_vol:.2f}" if total_call_vol != 0 else "N/A")
+
+        st.divider()
 
         # Charts
         c1, c2 = st.columns(2)
