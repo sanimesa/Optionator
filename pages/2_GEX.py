@@ -21,7 +21,8 @@ def get_tickers():
 
 def get_expiries(ticker):
     con = duckdb.connect(DB_FILE, read_only=True)
-    df = con.execute("SELECT DISTINCT expiry FROM option_chains WHERE ticker = ? ORDER BY expiry", [ticker]).df()
+    # Filter for expiries that are today or in the future
+    df = con.execute("SELECT DISTINCT expiry FROM option_chains WHERE ticker = ? AND expiry >= CURRENT_DATE ORDER BY expiry", [ticker]).df()
     con.close()
     return df['expiry'].tolist()
 
