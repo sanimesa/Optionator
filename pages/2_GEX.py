@@ -15,7 +15,8 @@ DB_FILE = os.path.join(os.path.dirname(__file__), "..", "options.db")
 # --- Data Loading ---
 def get_tickers():
     con = duckdb.connect(DB_FILE, read_only=True)
-    df = con.execute("SELECT DISTINCT ticker FROM option_chains ORDER BY ticker").df()
+    # Only return tickers that have data for current or future expiries
+    df = con.execute("SELECT DISTINCT ticker FROM option_chains WHERE expiry >= CURRENT_DATE ORDER BY ticker").df()
     con.close()
     return df['ticker'].tolist()
 
