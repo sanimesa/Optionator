@@ -28,19 +28,15 @@ def get_expiries(ticker):
 
 def get_run_dates(ticker, expiry):
     con = duckdb.connect(DB_FILE, read_only=True)
-    df = con.execute("SELECT run_date FROM option_chains WHERE ticker = ? AND expiry = ? ORDER BY run_date DESC", [ticker, expiry]).df()
+    df = con.execute("SELECT CAST(run_date AS VARCHAR) as run_date FROM option_chains WHERE ticker = ? AND expiry = ? ORDER BY run_date DESC", [ticker, expiry]).df()
     con.close()
     return df['run_date'].tolist()
 
 def load_data(ticker, expiry, run_date):
     con = duckdb.connect(DB_FILE, read_only=True)
-    # Cast to string for query comparison just to be safe or use parameters carefully
-    # run_date in DB is TIMESTAMP, select return datetime64[ns]
-    
-    # We query by parts to avoid timestamp format mismatch issues if possible
     result = con.execute("""
         SELECT raw_json FROM option_chains 
-        WHERE ticker = ? AND expiry = ? AND run_date = ?
+        WHERE ticker = ? AND expiry = ? AND CAST(run_date AS VARCHAR) = ?
     """, [ticker, expiry, run_date]).fetchone()
     con.close()
     
